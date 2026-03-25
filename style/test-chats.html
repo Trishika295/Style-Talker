@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Recent Chats</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .section {
+      background: #f5f5f5;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    input, button {
+      padding: 8px 12px;
+      margin: 5px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background: #ff69b4;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background: #ff46a0;
+    }
+    pre {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .success { color: #4caf50; }
+    .error { color: #f44336; }
+    .info { color: #2196f3; }
+  </style>
+</head>
+<body>
+  <h1>🔧 Test Recent Chats Loading</h1>
+  
+  <div class="section">
+    <h2>1. Set Test User</h2>
+    <input type="email" id="testEmail" placeholder="Enter email (e.g., test@example.com)" value="trish@gmail.com">
+    <button onclick="setTestUser()">Set Test User</button>
+    <p>User Status: <span id="userStatus" class="info">Not set</span></p>
+  </div>
+
+  <div class="section">
+    <h2>2. Fetch Recent Chats</h2>
+    <button onclick="testFetchChats()">Fetch Recent Chats</button>
+    <p>Status: <span id="fetchStatus" class="info">Ready</span></p>
+  </div>
+
+  <div class="section">
+    <h2>3. Response Data</h2>
+    <pre id="responseData">Will show response here...</pre>
+  </div>
+
+  <div class="section">
+    <h2>4. Console Logs</h2>
+    <button onclick="openConsole()">Open Browser Console (F12)</button>
+    <p>Check the console (F12) for detailed logs with 🔄📡📦✓❌ symbols</p>
+  </div>
+
+  <script>
+    function setTestUser() {
+      const email = document.getElementById('testEmail').value;
+      if (!email) {
+        alert('Please enter an email');
+        return;
+      }
+      
+      localStorage.setItem("user", JSON.stringify({
+        email: email,
+        name: email.split('@')[0]
+      }));
+      
+      document.getElementById('userStatus').textContent = 'Set to: ' + email;
+      document.getElementById('userStatus').className = 'success';
+      console.log('✓ Test user set:', email);
+    }
+
+    async function testFetchChats() {
+      const user = localStorage.getItem("user");
+      if (!user) {
+        alert('Please set a test user first');
+        return;
+      }
+
+      const userData = JSON.parse(user);
+      const email = userData.email;
+
+      console.log('Testing fetch for:', email);
+      document.getElementById('fetchStatus').textContent = 'Fetching...';
+      document.getElementById('fetchStatus').className = 'info';
+
+      try {
+        const url = `/style/ChatHistoryServlet?email=${encodeURIComponent(email)}`;
+        console.log('URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        document.getElementById('responseData').textContent = JSON.stringify(data, null, 2);
+        
+        if (data.success && data.categories && data.categories.length > 0) {
+          document.getElementById('fetchStatus').textContent = 'Success! Found ' + data.categories.length + ' categories';
+          document.getElementById('fetchStatus').className = 'success';
+          console.log('Found categories:', data.categories.map(c => c.category).join(', '));
+        } else {
+          document.getElementById('fetchStatus').textContent = 'No categories found';
+          document.getElementById('fetchStatus').className = 'info';
+          console.log('No categories in response');
+        }
+
+      } catch (error) {
+        document.getElementById('fetchStatus').textContent = 'Error: ' + error.message;
+        document.getElementById('fetchStatus').className = 'error';
+        console.error('Error:', error);
+        document.getElementById('responseData').textContent = 'Error: ' + error.message;
+      }
+    }
+
+    function openConsole() {
+      alert('Press F12 or Ctrl+Shift+I to open the console and see detailed logs');
+    }
+
+    window.addEventListener('load', function() {
+      const user = localStorage.getItem("user");
+      if (user) {
+        const userData = JSON.parse(user);
+        document.getElementById('testEmail').value = userData.email;
+        document.getElementById('userStatus').textContent = 'Already set to: ' + userData.email;
+        document.getElementById('userStatus').className = 'success';
+      }
+    });
+  </script>
+</body>
+</html>

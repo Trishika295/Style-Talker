@@ -1,0 +1,13 @@
+{
+  "name": "style-fashion-chatbot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Fashion chatbot with OpenAI integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["fashion", "chatbot"],
+  "author": "",
+  "license": "ISC"
+}

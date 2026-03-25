@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Style Talk Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="user-info">
+        <p>User ID: <span id="userId">...loading</span></p>
+        <p class="note">Running Locally (No Backend Required)</p>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn">New Chat</button>
+        <button class="nav-btn">History</button>
+        <button class="nav-btn">Projects</button>
+      </nav>
+      <div class="recent-chats">
+        <h4>RECENT CHATS</h4>
+        <p>No recent chats. Start one now!</p>
+      </div>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <h1>Hello, Trendsetter!</h1>
+      <p>Choose a category to start a real-time fashion conversation.</p>
+      <div class="categories">
+        <div class="card pink" onclick="startChat('girls')">
+          <div class="icon"></div>
+          <h3>Girls Style</h3>
+          <p>Discover the latest in casual, formal, and playful young women's fashion.</p>
+        </div>
+        <div class="card purple" onclick="startChat('boys')">
+          <div class="icon"></div>
+          <h3>Boys Style</h3>
+          <p>Get advice on streetwear, athletic wear, and smart casual looks for young men.</p>
+        </div>
+        <div class="card purple" onclick="startChat('formal')">
+          <div class="icon"></div>
+          <h3>Formal & Events</h3>
+          <p>Perfect recommendations for weddings, proms, galas, and professional settings.</p>
+        </div>
+        <div class="card pink" onclick="startChat('accessories')">
+          <div class="icon"></div>
+          <h3>Accessories</h3>
+          <p>The latest trends in bags, jewelry, shoes, and everything that completes the look.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="js/auth.js"></script>
+  <script src="js/fashionAPI.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    checkAuth();
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const user = localStorage.getItem("user");
+      if (user) {
+        const userData = JSON.parse(user);
+        document.getElementById("userId").textContent = userData.email || userData.name || "User";
+        loadRecentChatsOnDashboard();
+      }
+    });
+    
+    async function loadRecentChatsOnDashboard() {
+      try {
+        const user = localStorage.getItem("user");
+        if (!user) {
+          console.log("User not found");
+          return;
+        }
+        
+        const userData = JSON.parse(user);
+        const email = userData.email;
+        
+        if (!email) {
+          console.log("Email not found");
+          return;
+        }
+
+        console.log("Loading recent chats on dashboard for: " + email);
+
+        const data = await fashionAPI.getChatHistory(email);
+        console.log("Response:", data);
+
+        if (!data.success || !data.categories) {
+          console.log("No categories returned");
+          return;
+        }
+
+        const recentChatsDiv = document.querySelector('.recent-chats');
+        if (!recentChatsDiv) {
+          console.error("recent-chats div not found");
+          return;
+        }
+
+        const categoriesArray = data.categories || [];
+        console.log(" Found " + categoriesArray.length + " categories");
+        
+        if (categoriesArray.length === 0) {
+          recentChatsDiv.innerHTML = `
+            <h4>RECENT CHATS</h4>
+            <p>No recent chats. Start one now!</p>
+          `;
+          return;
+        }
+
+        let html = '<h4>RECENT CHATS</h4>';
+        
+        categoriesArray.forEach(cat => {
+          const categoryName = getCategoryDisplayName(cat.category);
+          html += `
+            <div class="recent-chat-item" onclick="navigateToChat('${cat.category}')">
+              <div class="chat-category">${categoryName}</div>
+              <div class="chat-meta">${cat.messageCount} message${cat.messageCount !== 1 ? 's' : ''}</div>
+            </div>
+          `;
+          console.log(categoryName + " - " + cat.messageCount + " messages");
+        });
+
+        recentChatsDiv.innerHTML = html;
+        console.log("Dashboard ready chats loaded!");
+
+      } catch (error) {
+        console.error("Error:", error);
+        console.error("Stack:", error.stack);
+      }
+    }
+  </script>
+</body>
+</html>

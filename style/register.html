@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Style Talk - Create Account</title>
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join Style Talk</p>
+      <p class="auth-tagline">Start tracking your fashion journey</p>
+
+      <form id="registerForm" onsubmit="createAccount(event)" class="auth-form">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Create a password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </form>
+
+      <div class="auth-divider">Already have an account?</div>
+
+      <button class="btn btn-secondary" onclick="window.location.href='login.html'">Sign In Instead</button>
+
+      <p class="auth-footer">Secure, fast, and easy account creation.</p>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    checkAuth();
+  </script>
+</body>
+</html>

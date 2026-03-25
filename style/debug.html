@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug - Data Persistence Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #ff69b4;
+      padding-bottom: 10px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #ff69b4;
+      border-radius: 4px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #ff69b4;
+    }
+    .status-good { color: #4caf50; font-weight: bold; }
+    .status-bad { color: #f44336; font-weight: bold; }
+    .status-warning { color: #ff9800; font-weight: bold; }
+    pre {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    button {
+      background: #ff69b4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+    }
+    button:hover {
+      background: #ff46a0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #ff69b4;
+      color: white;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Style Talk - Data Persistence Debug Console</h1>
+    
+    <div class="section">
+      <h2>Quick Actions</h2>
+      <button onclick="checkStatus()">Check Status</button>
+      <button onclick="clearData()">Clear Data</button>
+      <button onclick="openDebugAPI()">Open Debug API</button>
+    </div>
+
+    <div class="section">
+      <h2>Status Summary</h2>
+      <div id="statusSummary" class="loading">Click "Check Status" to get started...</div>
+    </div>
+
+    <div class="section">
+      <h2>Users Stored</h2>
+      <div id="usersSection" class="loading">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h2>Chat History</h2>
+      <div id="chatSection" class="loading">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h2>File Locations</h2>
+      <div id="filesSection" class="loading">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h2>System Information</h2>
+      <div id="systemSection" class="loading">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h2>Raw Debug Data</h2>
+      <pre id="rawData">Click "Check Status" to load debug data...</pre>
+    </div>
+  </div>
+
+  <script>
+    async function checkStatus() {
+      try {
+        const response = await fetch('/style/DebugServlet');
+        const data = await response.json();
+
+        const status = data.status || {};
+        let statusHTML = `
+          <p><strong>Users Stored:</strong> <span class="${status.usersStored ? 'status-good' : 'status-warning'}">
+            ${status.usersStored ? ' YES (' + data.totalUsers + ' users)' : 'NO'}
+          </span></p>
+          <p><strong>User Data File Exists:</strong> <span class="${status.userDataExists ? 'status-good' : 'status-warning'}">
+            ${status.userDataExists ? ' YES' : ' NO'}
+          </span></p>
+          <p><strong>Chat History Files:</strong> <span class="${status.chatHistoryFiles > 0 ? 'status-good' : 'status-warning'}">
+            ${status.chatHistoryFiles > 0 ? ' YES (' + status.chatHistoryFiles + ' files)' : ' NO'}
+          </span></p>
+          <p><strong>Data Persisting:</strong> <span class="${status.isDataPersisting ? 'status-good' : 'status-bad'}">
+            ${status.isDataPersisting ? ' YES' : ' NO - Check server logs'}
+          </span></p>
+        `;
+        document.getElementById('statusSummary').innerHTML = statusHTML;
+
+        // Users
+        let usersHTML = `<p>Total Users: <strong>${data.totalUsers || 0}</strong></p>`;
+        if (data.users && data.users.length > 0) {
+          usersHTML += '<table><tr><th>Email</th><th>Name</th><th>Created</th></tr>';
+          data.users.forEach(user => {
+            const createdDate = new Date(parseInt(user.createdAt)).toLocaleString();
+            usersHTML += `<tr><td>${user.email}</td><td>${user.name}</td><td>${createdDate}</td></tr>`;
+          });
+          usersHTML += '</table>';
+        }
+        document.getElementById('usersSection').innerHTML = usersHTML;
+
+        // Files
+        let filesHTML = '<h3>User Data Files:</h3>';
+        if (data.files.userData) {
+          data.files.userData.forEach(f => {
+            const status = f.exists ? `<span class="status-good">✓ EXISTS</span> (${f.size} bytes)` :
+                                      `<span class="status-warning">✗ NOT FOUND</span>`;
+            filesHTML += `<p><strong>${f.path}</strong><br>${status}</p>`;
+          });
+        }
+        
+        filesHTML += '<h3>Chat History Directories:</h3>';
+        if (data.files.chatHistory) {
+          data.files.chatHistory.forEach(d => {
+            const status = d.exists ? `<span class="status-good">✓ EXISTS</span> (${d.fileCount || 0} files)` :
+                                      `<span class="status-warning">✗ NOT FOUND</span>`;
+            filesHTML += `<p><strong>${d.path}</strong><br>${status}</p>`;
+            if (d.files && d.files.length > 0) {
+              filesHTML += '<ul>';
+              d.files.forEach(f => {
+                filesHTML += `<li>${f.name} (${f.size} bytes)</li>`;
+              });
+              filesHTML += '</ul>';
+            }
+          });
+        }
+        document.getElementById('filesSection').innerHTML = filesHTML;
+
+        // System
+        const sys = data.system || {};
+        let sysHTML = `
+          <p><strong>Working Directory:</strong> ${sys.currentWorkingDirectory}</p>
+          <p><strong>Temp Directory:</strong> ${sys.javaIOTempDir}</p>
+          <p><strong>User Home:</strong> ${sys.userHome}</p>
+        `;
+        document.getElementById('systemSection').innerHTML = sysHTML;
+
+        document.getElementById('rawData').textContent = JSON.stringify(data, null, 2);
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('statusSummary').innerHTML = `<span class="status-bad">✗ Error: ${error.message}</span>`;
+      }
+    }
+
+    function openDebugAPI() {
+      window.open('/style/DebugServlet', '_blank');
+    }
+
+    function clearData() {
+      if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+        alert('Clear functionality not yet implemented. Manually delete files from the system.');
+      }
+    }
+
+    window.addEventListener('load', checkStatus);
+  </script>
+</body>
+</html>
