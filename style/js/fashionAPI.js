@@ -1,8 +1,3 @@
-/**
- * FashionAPI - Interactive Fashion Query Interface
- * Handles all fashion-related queries and AI responses (Frontend-only version)
- */
-
 class FashionAPI {
   constructor() {
     this.timeout = 5000;
@@ -30,10 +25,6 @@ class FashionAPI {
     };
   }
 
-  /**
-   * Get fashion suggestions from local rules
-   * Dynamically analyzes query and generates relevant answers
-   */
   getLocalSuggestion(query, category) {
     const q = query.toLowerCase();
     const answer = this.generateDynamicAnswer(q, category);
@@ -46,18 +37,12 @@ class FashionAPI {
     };
   }
 
-  /**
-   * Intelligently extract information from query and generate dynamic answer
-   * Handles ANY clothing-related question
-   */
   generateDynamicAnswer(query, category) {
-    // Extract colors, items, and occasions from the question
     const colors = this.extractColors(query);
     const items = this.extractClothingItems(query);
     const occasion = this.extractOccasion(query);
     const colorStr = colors.length > 0 ? colors[0] : null;
 
-    // Special cases first (highest priority)
     if (query.includes('navratri') || query.includes('navaratri') || query.includes('9 color')) {
       return this.getNavratriAnswer();
     }
