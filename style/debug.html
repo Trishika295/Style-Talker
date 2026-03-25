@@ -153,7 +153,6 @@
         }
         document.getElementById('usersSection').innerHTML = usersHTML;
 
-        // Files
         let filesHTML = '<h3>User Data Files:</h3>';
         if (data.files.userData) {
           data.files.userData.forEach(f => {
@@ -180,7 +179,7 @@
         }
         document.getElementById('filesSection').innerHTML = filesHTML;
 
-        // System
+      
         const sys = data.system || {};
         let sysHTML = `
           <p><strong>Working Directory:</strong> ${sys.currentWorkingDirectory}</p>
